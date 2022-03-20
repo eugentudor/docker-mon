@@ -1,0 +1,48 @@
+version: '3.2'
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+    - 9090:9090
+    command:
+    - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+    - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+    - cadvisor
+  cadvisor:
+          #mage: gcr.io/google-containers/cadvisor:latest
+    image: google/cadvisor:latest
+    container_name: cadvisor
+    #    privileged: true
+    ports:
+    - 8080:8080
+    volumes:
+    - /:/rootfs:ro
+    - /var/run:/var/run:rw
+    - /sys:/sys:ro
+    - /var/lib/docker/:/var/lib/docker:ro
+      #- /etc/machine-id:/etc/machine-id:ro
+      #    - /var/lib/dbus/machine-id:/var/lib/dbus/machine-id:ro
+      #    command: ["start", "--privileged"]
+    devices:
+    - /dev/kmsg:/dev/kmsg
+    depends_on:
+    - redis
+
+  grafana:
+    image: grafana/grafana
+    user: "1000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=password
+    depends_on:
+      - prometheus
+    ports:
+      - 3000:3000
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+    - 6378:6378
